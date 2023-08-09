@@ -114,12 +114,9 @@ ColaLayout.prototype.run = function () {
     if (options.ungrabifyWhileSimulating) {
       grabbableNodes.grabify();
     }
-
     cy.off("destroy", destroyHandler);
-
     nodes.off("grab free position", grabHandler);
     nodes.off("lock unlock", lockHandler);
-
     // trigger layoutstop when the layout stops (e.g. finishes)
     layout.one("layoutstop", options.stop);
     layout.trigger({ type: "layoutstop", layout: layout });
@@ -156,9 +153,9 @@ ColaLayout.prototype.run = function () {
         case "end":
         case END:
           updateNodePositions();
-          if (!options.infinite) {
-            onDone();
-          }
+          // if (!options.infinite) {
+          //   onDone();
+          // }
           break;
       }
     },
@@ -170,11 +167,11 @@ ColaLayout.prototype.run = function () {
       let firstTick = true;
 
       let inftick = function () {
-        if (layout.manuallyStopped) {
-          onDone();
+        // if (layout.manuallyStopped) {
+        //   onDone();
 
-          return true;
-        }
+        //   return true;
+        // }
 
         let ret = adaptor.tick();
 
@@ -184,7 +181,8 @@ ColaLayout.prototype.run = function () {
 
         firstTick = false;
 
-        if (ret && options.infinite) {
+        // manuallyStopped means paused or stoped
+        if (ret && options.infinite && !layout.manuallyStopped) {
           // resume layout if done
           adaptor.resume(); // resume => new kick
         }
@@ -225,6 +223,7 @@ ColaLayout.prototype.run = function () {
     drag: nop, // not needed for our case
   }));
   layout.adaptor = adaptor;
+  layout.onDone = onDone;
 
   // if set no grabbing during layout
   let grabbableNodes = nodes.filter(":grabbable");
@@ -540,6 +539,25 @@ ColaLayout.prototype.stop = function () {
   if (this.adaptor) {
     this.manuallyStopped = true;
     this.adaptor.stop();
+    this.onDone();
+  }
+
+  return this; // chaining
+};
+
+ColaLayout.prototype.pause = function () {
+  if (this.adaptor) {
+    this.manuallyStopped = true;
+    this.adaptor.stop();
+  }
+
+  return this; // chaining
+};
+
+ColaLayout.prototype.resume = function () {
+  if (this.adaptor) {
+    this.manuallyStopped = false;
+    this.adaptor.resume();
   }
 
   return this; // chaining
