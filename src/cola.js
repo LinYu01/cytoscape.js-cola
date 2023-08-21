@@ -80,23 +80,28 @@ ColaLayout.prototype.run = function () {
       }
     }
 
-    nodes.positions(function (node) {
-      let scratch = node.scratch().cola;
-      let retPos;
+    try {
+      nodes.positions(function (node) {
+        let scratch = node.scratch().cola;
+        let retPos;
 
-      if (!node.grabbed() && nonparentNodes.contains(node)) {
-        retPos = {
-          x: bb.x1 + scratch.x,
-          y: bb.y1 + scratch.y,
-        };
+        if (!node.grabbed() && nonparentNodes.contains(node)) {
+          retPos = {
+            x: bb.x1 + scratch.x,
+            y: bb.y1 + scratch.y,
+          };
 
-        if (!isNumber(retPos.x) || !isNumber(retPos.y)) {
-          retPos = undefined;
+          if (!isNumber(retPos.x) || !isNumber(retPos.y)) {
+            retPos = undefined;
+          }
         }
-      }
 
-      return retPos;
-    });
+        return retPos;
+      });
+    } catch (error) {
+      // ignore error
+      // console.warn(error);
+    }
 
     nodes.updateCompoundBounds(); // because the way this layout sets positions is buggy for some reason; ref #878
 
@@ -548,7 +553,7 @@ ColaLayout.prototype.stop = function () {
 ColaLayout.prototype.pause = function () {
   if (this.adaptor) {
     this.manuallyStopped = true;
-    this.adaptor.stop();
+    this.adaptor.pause();
   }
 
   return this; // chaining
