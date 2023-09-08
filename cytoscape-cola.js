@@ -7586,9 +7586,12 @@ ColaLayout.prototype.run = function () {
     try {
       nodes.positions(function (node) {
         var scratch = node.scratch().cola;
+        var isColaLocked = node.scratch("__cola_locked");
         var retPos = void 0;
 
-        if (!node.grabbed() && nonparentNodes.contains(node)) {
+        // 1 cytoscape.lock() is not list here as it will prevent position updates
+        // 2 but for cola locked state, will have to do check here
+        if (!node.grabbed() && nonparentNodes.contains(node) && !isColaLocked) {
           retPos = {
             x: bb.x1 + scratch.x,
             y: bb.y1 + scratch.y
@@ -7778,7 +7781,9 @@ ColaLayout.prototype.run = function () {
     var node = this;
     var scrCola = node.scratch().cola;
 
-    scrCola.fixed = node.locked();
+    var isColaLocked = node.scratch("__cola_locked");
+
+    scrCola.fixed = node.locked() || isColaLocked === true;
 
     if (node.locked()) {
       adaptor.dragstart(scrCola);
@@ -7793,13 +7798,15 @@ ColaLayout.prototype.run = function () {
     var pos = node.position();
     var dimensions = node.layoutDimensions(options);
 
+    var isColaLocked = node.scratch("__cola_locked");
+
     var struct = node.scratch().cola = {
-      x: options.randomize && !node.locked() || pos.x === undefined ? Math.round(Math.random() * bb.w) : pos.x,
-      y: options.randomize && !node.locked() || pos.y === undefined ? Math.round(Math.random() * bb.h) : pos.y,
+      x: options.randomize && !node.locked() && !isColaLocked || pos.x === undefined ? Math.round(Math.random() * bb.w) : pos.x,
+      y: options.randomize && !node.locked() && !isColaLocked || pos.y === undefined ? Math.round(Math.random() * bb.h) : pos.y,
       width: dimensions.w + 2 * padding,
       height: dimensions.h + 2 * padding,
       index: i,
-      fixed: node.locked()
+      fixed: node.locked() || isColaLocked === true
     };
 
     return struct;
